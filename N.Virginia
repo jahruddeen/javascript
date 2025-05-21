@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <regex>
+#include <sstream>
+#include <algorithm>
+
+struct Offer {
+    int quantity;
+    int discount;
+    bool or_more;
+};
+
+// Function to split the input offer string by ';'
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::stringstream ss(str);
+    std::string temp;
+
+    while (getline(ss, temp, delimiter)) {
+        tokens.push_back(temp);
+    }
+
+    return tokens;
+}
+
+// Function to parse offer string and return a vector of Offer structs
+std::vector<Offer> parseOffers(const std::string& offerStr) {
+    std::vector<Offer> offers;
+    std::vector<std::string> parts = split(offerStr, ';');
+
+    std::regex pattern(R"(Buy (\d+)(?: or more)? .*save ₹(\d+))");
+
+    for (const std::string& part : parts) {
+        std::smatch match;
+        if (std::regex_search(part, match, pattern)) {
+            int qty = std::stoi(match[1]);
+            int disc = std::stoi(match[2]);
+            bool orMore = part.find("or more") != std::string::npos;
+
+            offers.push_back({qty, disc, orMore});
+        }
+    }
+
+    return offers;
+}
+
+// Function to determine the best discount based on items bought
+int calculateDiscount(const std::vector<Offer>& offers, int quantityBought) {
+    int maxDiscount = 0;
+
+    for (const auto& offer : offers) {
+        if ((offer.or_more && quantityBought >= offer.quantity) ||
+            (!offer.or_more && quantityBought == offer.quantity)) {
+            maxDiscount = std::max(maxDiscount, offer.discount);
+        }
+    }
+
+    return maxDiscount;
+}
+
+// Main simulation function
+void simulateCart(const std::string& offerStr, int itemPrice, int quantityBought) {
+    auto offers = parseOffers(offerStr);
+    int totalPrice = itemPrice * quantityBought;
+    int discount = calculateDiscount(offers, quantityBought);
+    int finalPrice = totalPrice - discount;
+
+    std::cout << "Item Price      : ₹" << itemPrice << std::endl;
+    std::cout << "Quantity Bought : " << quantityBought << std::endl;
+    std::cout << "Total Price     : ₹" << totalPrice << std::endl;
+    std::cout << "Discount Applied: ₹" << discount << std::endl;
+    std::cout << "Final Price     : ₹" << finalPrice << std::endl;
+}
+
+// Entry point
+int main() {
+    std::string offerStr = "Buy 2 items save ₹20; Buy 3 or more save ₹40";
+    int itemPrice = 300;
+    int quantityBought = 3;
+
+    simulateCart(offerStr, itemPrice, quantityBought);
+
+    return 0;
+}
+

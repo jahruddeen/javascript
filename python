@@ -1,0 +1,59 @@
+import re
+
+# Step 1: Parse combo offer string into structured rules
+def parse_offers(offer_string):
+    """
+    Parses offer strings like:
+    "Buy 2 items save ₹20; Buy 3 or more save ₹40"
+    
+    Returns a list of dicts:
+    [{'quantity': 2, 'discount': 20, 'or_more': False}, ...]
+    """
+    offers = []
+    parts = offer_string.split(';')
+
+    for part in parts:
+        part = part.strip()
+
+        # Regular expression to extract quantity and discount
+        match = re.search(r'Buy (\d+)(?: or more)? .*save ₹(\d+)', part)
+
+        if match:
+            quantity = int(match.group(1))
+            discount = int(match.group(2))
+            or_more = 'or more' in part
+
+            offers.append({
+                'quantity': quantity,
+                'discount': discount,
+                'or_more': or_more
+            })
+
+    return offers
+
+# Step 2: Determine which discount applies based on cart quantity
+def calculate_discount(offers, quantity_bought):
+    """
+    Given list of offers and the quantity in cart,
+    returns the best applicable discount.
+    """
+    best_discount = 0
+
+    for offer in offers:
+        if offer['or_more'] and quantity_bought >= offer['quantity']:
+            best_discount = max(best_discount, offer['discount'])
+        elif not offer['or_more'] and quantity_bought == offer['quantity']:
+            best_discount = max(best_discount, offer['discount'])
+
+    return best_discount
+
+# Step 3: Simulate a shopping cart and apply offer logic
+def simulate_cart(offer_string, item_price, quantity_bought):
+    """
+    Simulates a cart with discount logic based on offer string.
+    Prints summary of the transaction.
+    """
+    offers = parse_offers(offer_string)
+    total_price = item_price * quantity_bought
+    discount = calculate_discount(offers, quantity_bought)
+
